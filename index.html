@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Eternal Legends — MMORPG Idle no navegador</title>
+<meta name="description" content="Jogue grátis no celular ou PC. Seu herói luta sozinho, até offline.">
+<style>
+:root{--ink:#12152b;--ink2:#1b1838;--gold:#d9a441;--ember:#8c2f1f;--text:#ece6d6;--mute:#a9a3c0;--line:#d9a44140}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ink);color:var(--text);font:16px/1.55 Georgia,'Times New Roman',serif}
+a{color:var(--gold)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 18px}
+header{border-bottom:1px solid var(--line);background:#0d0f20}
+header .wrap{display:flex;justify-content:space-between;align-items:center;min-height:56px}
+header b{color:var(--gold);font-size:19px;font-weight:normal;letter-spacing:.5px}
+header nav a{margin-left:16px;text-decoration:none;color:var(--mute);font-size:14px}
+.hero{padding:34px 0 26px;background:radial-gradient(ellipse at 20% 0,#3a2a63 0,transparent 60%),radial-gradient(ellipse at 90% 100%,#5a1d14 0,transparent 55%)}
+.hero .wrap{display:grid;gap:28px}
+@media(min-width:800px){.hero .wrap{grid-template-columns:1.2fr 1fr;align-items:center}}
+h1{font-size:clamp(34px,7vw,56px);line-height:1.05;margin:0 0 14px;font-weight:normal}
+.lead{color:var(--mute);margin:0 0 20px;max-width:34em}
+.live{display:flex;gap:0;border:1px solid var(--line);background:#0d0f2099}
+.live div{flex:1;padding:12px 10px;text-align:center;border-right:1px solid var(--line)}
+.live div:last-child{border:0}
+.live b{display:block;font-size:30px;color:var(--gold);font-weight:normal;line-height:1.1}
+.live small{color:var(--mute);font-size:12px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#55dd55;margin-right:5px}
+.box{background:var(--ink2);border:1px solid var(--gold);padding:20px;display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex}
+.tabs button{flex:1;background:none;border:0;border-bottom:2px solid var(--line);color:var(--mute);padding:10px;font:inherit;cursor:pointer}
+.tabs button.on{color:var(--gold);border-color:var(--gold)}
+label{font-size:13px;color:var(--mute)}
+input,select{width:100%;background:#0d0f20;border:1px solid #6d6590;color:var(--text);padding:13px;font:inherit;border-radius:3px}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold);outline-offset:1px}
+.go{background:var(--gold);color:var(--ink);border:0;padding:14px;font:inherit;font-weight:bold;cursor:pointer;min-height:48px}
+.go:active{background:#f0c066}
+.alt{background:var(--ember);color:#fff}
+#err{color:#ff8c7a;margin:0;min-height:1.2em;font-size:14px}
+section{padding:34px 0;border-top:1px solid var(--line)}
+h2{font-weight:normal;color:var(--gold);font-size:26px;margin:0 0 6px}
+.sub{color:var(--mute);margin:0 0 18px}
+.grid{display:grid;gap:14px}
+@media(min-width:700px){.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}}
+.cls{border-left:3px solid var(--gold);padding:4px 0 4px 14px}
+.cls h3,.sys h3{margin:0 0 4px;font-weight:normal;font-size:19px}
+.soon{border-left-color:#555;opacity:.65}
+.tag{font-size:12px;color:var(--ink);background:var(--gold);padding:1px 7px;margin-left:6px}
+table{width:100%;border-collapse:collapse;font-size:15px}
+td,th{padding:8px 6px;border-bottom:1px solid #ffffff14;text-align:left}
+th{color:var(--mute);font-weight:normal;font-size:13px}
+td:nth-child(n+2),th:nth-child(n+2){text-align:right}
+.tw{overflow-x:auto}
+.rar span{display:inline-block;margin:0 14px 6px 0;font-size:18px}
+ol{margin:0;padding-left:22px}
+footer{padding:26px 0 40px;border-top:1px solid var(--line);color:var(--mute);font-size:13px}
+</style></head><body>
+<header><div class="wrap"><b>Eternal Legends</b>
+<nav><a href="#classes">Classes</a><a href="#monstros">Monstros</a><a href="#sistemas">Sistemas</a><a href="#breve">Em breve</a></nav></div></header>
+
+<div class="hero"><div class="wrap">
+<div>
+<h1>Seu herói luta enquanto você vive.</h1>
+<p class="lead">MMORPG idle de fantasia no navegador. Entre pelo celular ou PC, sem instalar nada. Seu personagem caça sozinho, ganha ouro e itens, e continua rendendo mesmo offline.</p>
+<div class="live" aria-live="polite">
+<div><b id="n-acc">–</b><small>contas criadas</small></div>
+<div><b id="n-on">–</b><small><span class="dot"></span>online agora</small></div>
+<div><b id="n-boss">–</b><small id="t-boss">chefe mundial</small></div>
+</div>
+</div>
+
+<div class="box" id="box">
+<div id="cont" hidden><p style="margin:0">Você já tem uma sessão ativa.</p><a class="go" href="/jogo.html" style="text-align:center;text-decoration:none">Continuar jogando</a><button class="go alt" id="out">Sair e usar outra conta</button></div>
+<form id="f" novalidate>
+<div class="tabs" role="tablist"><button type="button" id="tl" class="on">Entrar</button><button type="button" id="tr">Criar conta</button></div>
+<div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+<div><label for="nm">Nome do herói</label><input id="nm" maxlength="16" autocomplete="username" placeholder="3 a 16 letras ou números"></div>
+<div><label for="pw">Senha</label><input id="pw" type="password" autocomplete="current-password" placeholder="mínimo 6 caracteres"></div>
+<div id="cc" hidden><label for="cl">Classe inicial</label><select id="cl"></select></div>
+<button class="go" id="sub">Entrar no jogo</button>
+<p id="err" role="alert"></p>
+</div></form>
+</div>
+</div></div>
+
+<section id="classes"><div class="wrap">
+<h2>Classes</h2><p class="sub">Cada classe tem atributos próprios. Escolha ao criar a conta.</p>
+<div class="grid g2" id="classes-l"></div></div></section>
+
+<section id="monstros"><div class="wrap">
+<h2>Monstros e chefe mundial</h2><p class="sub">Cada monstro libera por nível. Quanto mais forte, mais XP, ouro e itens.</p>
+<div class="tw"><table><thead><tr><th>Monstro</th><th>Nível</th><th>Vida</th><th>XP</th><th>Ouro</th></tr></thead><tbody id="mon-l"></tbody></table></div>
+<p id="boss-l" style="margin-top:14px"></p></div></section>
+
+<section id="sistemas"><div class="wrap">
+<h2>O que já existe no jogo</h2><p class="sub">Tudo isso está funcionando hoje.</p>
+<div class="grid g3">
+<div class="sys"><h3>Combate automático</h3>Ative ou desative a qualquer momento. O servidor calcula cada golpe, então ninguém trapaceia.</div>
+<div class="sys"><h3>Recompensas offline</h3>Ao voltar, você vê um resumo de XP, ouro e itens. O limite é de 8 horas fora. Se o monstro for forte demais, o herói para de caçar por segurança.</div>
+<div class="sys"><h3>Chefe mundial</h3>Todos os jogadores atacam o mesmo chefe. Quem causa mais dano ganha item raro garantido. Ele renasce 5 minutos depois.</div>
+<div class="sys"><h3>Equipamentos</h3>Cinco peças: lâmina, elmo, armadura, botas e anel. Compare com o que você usa, aprimore até +9 e equipe os melhores com um toque.</div>
+<div class="sys"><h3>Melhorias com ouro</h3>Dano, defesa, velocidade de ataque e experiência, até o nível 50 cada.</div>
+<div class="sys"><h3>Mundo compartilhado</h3>Chat global, lista de jogadores online, ranking por nível e outros heróis aparecendo no seu cenário 3D.</div>
+</div>
+<h3 style="font-weight:normal;margin:26px 0 8px">Raridades de item</h3>
+<div class="rar" id="rar-l"></div>
+</div></section>
+
+<section><div class="wrap">
+<h2>Melhores jogadores</h2><p class="sub">Ranking por nível, atualizado em tempo real.</p>
+<ol id="top-l"><li>Carregando...</li></ol></div></section>
+
+<section id="breve"><div class="wrap">
+<h2>Em breve</h2><p class="sub">Ainda não estão no jogo.</p>
+<div class="grid g2">
+<div class="cls soon"><h3>Novas classes</h3>Fairy Elf, Magic Gladiator, Dark Lord e Summoner.</div>
+<div class="cls soon"><h3>Mais mapas</h3>Floresta encantada, deserto, montanhas congeladas, castelo sombrio e outros.</div>
+<div class="cls soon"><h3>Comunidade</h3>Mercado entre jogadores, amigos, grupos, guildas e guerras de guilda.</div>
+<div class="cls soon"><h3>Desafios</h3>PvP, missões diárias, conquistas, masmorras e eventos temporários.</div>
+</div></div></section>
+
+<footer><div class="wrap">Eternal Legends · jogo em desenvolvimento. Os números acima atualizam a cada 15 segundos.</div></footer>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const RC=['#b0b0b0','#55dd55','#4c8cff','#b455ff','#ffaa22','#ff4444'];
+const fmt=n=>Number(n).toLocaleString('pt-BR');
+let mode='login',built=false;
+
+function setMode(m){mode=m;$('#tl').classList.toggle('on',m==='login');$('#tr').classList.toggle('on',m==='register');
+ $('#cc').hidden=m==='login';$('#sub').textContent=m==='login'?'Entrar no jogo':'Criar conta e jogar';
+ $('#pw').autocomplete=m==='login'?'current-password':'new-password';$('#err').textContent=''}
+$('#tl').onclick=()=>setMode('login');$('#tr').onclick=()=>setMode('register');
+if(location.hash==='#criar')setMode('register');
+
+$('#f').onsubmit=async e=>{e.preventDefault();const b=$('#sub');b.disabled=true;$('#err').textContent='';
+ try{const r=await fetch('/api/'+mode,{method:'POST',headers:{'Content-Type':'application/json'},
+  body:JSON.stringify({name:$('#nm').value.trim(),pass:$('#pw').value,cls:$('#cl').value})});
+  const j=await r.json();if(!r.ok)throw new Error(j.error||'Erro inesperado.');
+  localStorage.setItem('el_token',j.token);location.href='/jogo.html'}
+ catch(x){$('#err').textContent=x.message==='Failed to fetch'?'Sem conexão com o servidor.':x.message;b.disabled=false}};
+
+if(localStorage.getItem('el_token')){$('#cont').hidden=false;$('#f').hidden=true}
+$('#out').onclick=()=>{localStorage.removeItem('el_token');$('#cont').hidden=true;$('#f').hidden=false};
+
+function build(c){built=true;
+ $('#cl').innerHTML=Object.entries(c.CLASSES).map(([k,v])=>`<option value="${k}">${esc(v.n)}</option>`).join('');
+ const desc={dk:'Guerreiro corpo a corpo. Muita vida e defesa.',dw:'Mago de ataque forte e vida baixa.'};
+ $('#classes-l').innerHTML=Object.entries(c.CLASSES).map(([k,v])=>`<div class="cls"><h3>${esc(v.n)}</h3>${desc[k]||''}<br><small style="color:var(--mute)">Vida ${v.hp} · Ataque ${v.atk} · Defesa ${v.def} no nível 1</small></div>`).join('');
+ $('#mon-l').innerHTML=c.MON.map(m=>`<tr><td>${esc(m.n)}</td><td>${m.lv}</td><td>${fmt(m.hp)}</td><td>${m.xp}</td><td>${m.g}</td></tr>`).join('');
+ $('#boss-l').innerHTML=`<b style="color:var(--gold)">${esc(c.BOSS.n)}</b>, chefe mundial nível ${c.BOSS.lv} com ${fmt(c.BOSS.hp)} de vida. Precisa de vários jogadores.`;
+ $('#rar-l').innerHTML=c.RAR.map((r,i)=>`<span style="color:${RC[i]}">${esc(r)}</span>`).join('')}
+
+async function load(){try{const s=await (await fetch('/api/stats')).json();
+ $('#n-acc').textContent=fmt(s.accounts);$('#n-on').textContent=fmt(s.online);
+ $('#n-boss').textContent=s.boss.alive?Math.round(s.boss.hp/s.boss.max*100)+'%':'caído';
+ $('#t-boss').textContent=s.boss.alive?'vida do chefe mundial':'chefe renascendo';
+ $('#top-l').innerHTML=s.top.length?s.top.map(t=>`<li>${esc(t.n)} <span style="color:var(--mute)">· nível ${t.l}</span></li>`).join(''):'<li>Seja o primeiro a entrar.</li>';
+ if(!built)build(s.cfg)}catch(e){}}
+load();setInterval(load,15000);
+</script></body></html>

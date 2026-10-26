@@ -43,7 +43,7 @@ const db = {
     if (pool) await pool.query('UPDATE players SET data=$2,last_seen=$3,lvl=$4 WHERE id=$1', [id, data, Date.now(), lvl]);
     else Object.assign(mem.get(id), { data, last_seen: Date.now(), lvl });
   },
-  async count() {
+  async accounts() {\n    if (pool) return (await pool.query('SELECT name,lvl FROM players ORDER BY name ASC')).rows;\n    return [...mem.values()].map(p => ({name:p.name,lvl:p.lvl})).sort((a,b)=>a.name.localeCompare(b.name));\n  },\n  async count() {
     if (pool) return +(await pool.query('SELECT count(*) FROM players')).rows[0].count;
     return mem.size;
   },
@@ -71,7 +71,7 @@ app.get('/api/stats', h(async (q, r) => {
     top: (await db.top()).slice(0, 5).map((x) => ({ n: x.name, l: x.lvl })),
     cfg: { MON: G.MON, BOSS: G.BOSS, CLASSES: G.CLASSES, SLOTS: G.SLOTS, RAR: G.RAR } });
 }));
-app.post('/api/register', h(async (q, r) => {
+app.get('/api/accounts', h(async (q, r) => { r.json({ accounts: await db.accounts() }); }));\napp.post('/api/register', h(async (q, r) => {
   const { name, pass, cls } = q.body || {};
   if (!/^[A-Za-z0-9_]{3,16}$/.test(name || '') || typeof pass !== 'string' || pass.length < 6 || pass.length > 72 || !G.CLASSES[cls])
     return r.status(400).json({ error: 'Nome: 3-16 letras/números. Senha: mínimo 6 caracteres.' });
@@ -103,7 +103,7 @@ function view(o) {
     c: { name: o.name, cls: c.cls, lvl: c.lvl, xp: c.xp, xn: G.xpNext(c.lvl), gold: c.gold,
       hp: Math.floor(c.hp ?? s.hp), hpMax: s.hp, mhp: Math.max(0, Math.floor(c.mhp ?? G.MON[c.mon].hp)),
       mon: c.mon, auto: c.auto, kills: c.kills, bk: c.bossKills, st: s, up: c.up,
-      upc: Object.fromEntries(Object.keys(c.up).map((k) => [k, G.upCost(c.up[k])])),
+      upc: Object.fromEntries(Object.keys(c.up).map((k) => [k, G.upCost(c.up[k])])), skills: G.skillsFor(c),
       inv: c.inv.map(dec), eq: Object.fromEntries(Object.entries(c.eq).map(([k, v]) => [k, dec(v)])) },
     online: [...online.values()].map((p) => ({ n: p.name, c: p.c.cls, l: p.c.lvl })),
     boss: { hp: Math.max(0, Math.floor(boss.hp)), max: G.BOSS.hp, at: boss.respawnAt,
@@ -187,7 +187,7 @@ wss.on('connection', (ws) => {
         const c = row.data; c.hp = null; c.mhp = null;
         const secs = Math.min((Date.now() - Number(row.last_seen)) / 1000, OFF_MAX);
         const sum = secs >= 60 ? G.offline(c, secs) : null;
-        o = { ws, id, name: row.name, c, hit: 0, ct: 0, tick: 0 };
+        o = { ws, id, name: row.name, c, hit: 0, ct: 0, tick: 0, skillAt: 0 };
         online.set(id, o);
         await save(o);
         J(ws, { t: 'cfg', MON: G.MON, BOSS: G.BOSS, CLASSES: G.CLASSES, SLOTS: G.SLOTS, RAR: G.RAR });
@@ -210,7 +210,7 @@ setInterval(() => {
   if (boss.hp <= 0 && now >= boss.respawnAt) { boss.hp = G.BOSS.hp; boss.dmg.clear(); sys(`${G.BOSS.n} reapareceu!`); }
   for (const o of online.values()) {
     let ev = {};
-    if (o.c.auto) { ev = G.fight(o.c, 1); if (ev.died) ev.msg = 'Você foi derrotado e reviveu.'; }
+    if (o.c.auto) {\n      const skills = G.skillsFor(o.c).filter(sk => sk.unlocked);\n      const skill = skills.length && now >= o.skillAt ? skills[Math.min(skills.length - 1, Math.floor(o.c.lvl / 5))] : null;\n      if (skill) o.skillAt = now + Math.max(2600, 6500 - o.c.lvl * 35);\n      ev = G.fight(o.c, 1, skill); if (ev.died) ev.msg = 'Você foi derrotado e reviveu.';\n    }
     push(o, ev);
     if (++o.tick % 30 === 0) save(o);
   }

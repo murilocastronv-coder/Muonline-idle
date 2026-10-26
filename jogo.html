@@ -52,8 +52,8 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e4?(n/1e3).toFixed(1)+'k':Math.floor(n);
 const RC=['#b0b0b0','#55dd55','#4c8cff','#b455ff','#ffaa22','#ff4444'];
-let ws,S=null,CFG=null,tab=null,chat=[],rank=[],tt=0,toastT;
-let R3,scene,cam,hero,mon,bossM,others=new Map(),parts=[],fx={hit:0,die:0};
+let ws,S=null,CFG=null,tab=null,chat=[],rank=[],toastT;
+let pixelStarted=false,tt=0,hero=null,mon=null,bossM=null,others=new Map(),fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
 const clock={t:performance.now(),get(){const n=performance.now(),d=(n-this.t)/1000;this.t=n;return Math.min(d,.1)}};
 
 // ---------- conexão ----------
@@ -122,7 +122,6 @@ $('#nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=ta
 // ---------- Renderizador 2D pixel art otimizado ----------
 const world=$('#world'),px=world.getContext('2d',{alpha:false});
 const PW=320,PH=180;world.width=PW;world.height=PH;px.imageSmoothingEnabled=false;
-let pixelStarted=false,tt=0,hero=null,mon=null,bossM=null,others=new Map(),fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
 const pal={dk:{armor:'#a92f36',light:'#ff6c58',dark:'#4a1e36',hair:'#d7d4db',skin:'#f1c19a',weapon:'#d9e5ef'},dw:{armor:'#4936a8',light:'#9278ff',dark:'#211d55',hair:'#dfd7ff',skin:'#eac09f',weapon:'#7deaff'},elf:{armor:'#238b68',light:'#72e6a7',dark:'#154a43',hair:'#f0d17b',skin:'#f4c8a4',weapon:'#b4f6a1'},mg:{armor:'#bd5b28',light:'#ffc15b',dark:'#572d34',hair:'#31233b',skin:'#e9b995',weapon:'#e7e8ef'},dl:{armor:'#542b72',light:'#b77cff',dark:'#281c42',hair:'#e5d5b5',skin:'#efc19d',weapon:'#ffd56b'},sm:{armor:'#2867a7',light:'#6bd7ff',dark:'#1c315e',hair:'#9a6bce',skin:'#edc3a7',weapon:'#d5a6ff'}};
 function rect(x,y,w,h,c){px.fillStyle=c;px.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)))}
 function txt(t,x,y,c,size){px.font=(size||7)+'px monospace';px.textAlign='center';px.fillStyle='#120f20';px.fillText(t,x+1,y+1);px.fillStyle=c||'#fff';px.fillText(t,x,y)}

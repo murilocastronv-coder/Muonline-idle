@@ -43,7 +43,11 @@ const db = {
     if (pool) await pool.query('UPDATE players SET data=$2,last_seen=$3,lvl=$4 WHERE id=$1', [id, data, Date.now(), lvl]);
     else Object.assign(mem.get(id), { data, last_seen: Date.now(), lvl });
   },
-  async accounts() {\n    if (pool) return (await pool.query('SELECT name,lvl FROM players ORDER BY name ASC')).rows;\n    return [...mem.values()].map(p => ({name:p.name,lvl:p.lvl})).sort((a,b)=>a.name.localeCompare(b.name));\n  },\n  async count() {
+  async accounts() {
+    if (pool) return (await pool.query('SELECT name,lvl FROM players ORDER BY name ASC')).rows;
+    return [...mem.values()].map(p => ({name:p.name,lvl:p.lvl})).sort((a,b)=>a.name.localeCompare(b.name));
+  },
+  async count() {
     if (pool) return +(await pool.query('SELECT count(*) FROM players')).rows[0].count;
     return mem.size;
   },
@@ -71,7 +75,8 @@ app.get('/api/stats', h(async (q, r) => {
     top: (await db.top()).slice(0, 5).map((x) => ({ n: x.name, l: x.lvl })),
     cfg: { MON: G.MON, BOSS: G.BOSS, CLASSES: G.CLASSES, SLOTS: G.SLOTS, RAR: G.RAR } });
 }));
-app.get('/api/accounts', h(async (q, r) => { r.json({ accounts: await db.accounts() }); }));\napp.post('/api/register', h(async (q, r) => {
+app.get('/api/accounts', h(async (q, r) => { r.json({ accounts: await db.accounts() }); }));
+app.post('/api/register', h(async (q, r) => {
   const { name, pass, cls } = q.body || {};
   if (!/^[A-Za-z0-9_]{3,16}$/.test(name || '') || typeof pass !== 'string' || pass.length < 6 || pass.length > 72 || !G.CLASSES[cls])
     return r.status(400).json({ error: 'Nome: 3-16 letras/números. Senha: mínimo 6 caracteres.' });
@@ -210,7 +215,12 @@ setInterval(() => {
   if (boss.hp <= 0 && now >= boss.respawnAt) { boss.hp = G.BOSS.hp; boss.dmg.clear(); sys(`${G.BOSS.n} reapareceu!`); }
   for (const o of online.values()) {
     let ev = {};
-    if (o.c.auto) {\n      const skills = G.skillsFor(o.c).filter(sk => sk.unlocked);\n      const skill = skills.length && now >= o.skillAt ? skills[Math.min(skills.length - 1, Math.floor(o.c.lvl / 5))] : null;\n      if (skill) o.skillAt = now + Math.max(2600, 6500 - o.c.lvl * 35);\n      ev = G.fight(o.c, 1, skill); if (ev.died) ev.msg = 'Você foi derrotado e reviveu.';\n    }
+    if (o.c.auto) {
+      const skills = G.skillsFor(o.c).filter(sk => sk.unlocked);
+      const skill = skills.length && now >= o.skillAt ? skills[Math.min(skills.length - 1, Math.floor(o.c.lvl / 5))] : null;
+      if (skill) o.skillAt = now + Math.max(2600, 6500 - o.c.lvl * 35);
+      ev = G.fight(o.c, 1, skill); if (ev.died) ev.msg = 'Você foi derrotado e reviveu.';
+    }
     push(o, ev);
     if (++o.tick % 30 === 0) save(o);
   }

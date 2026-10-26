@@ -43,7 +43,7 @@ input,select{background:#0d0f20;border:1px solid #6d6590;border-radius:4px;paddi
 <div class="bar"><i id="mb" style="background:#c9822a"></i><span id="mt"></span></div></div>
 <div id="toast" hidden></div><div id="panel" hidden></div>
 <div id="nav" class="ui" hidden>
-<button data-tab="fight">⚔️</button><button data-tab="inv">🎒</button><button data-tab="up">⬆️</button>
+<button data-tab="fight">⚔️</button><button data-tab="inv">🎒</button><button data-tab="up">⬆️</button><button data-tab="magic">✨</button>
 <button data-tab="boss">👑</button><button data-tab="rank">🏆</button><button data-tab="chat">💬</button></div>
 <div id="off" hidden></div>
 <canvas id="world" aria-label="Mundo 2D pixel art"></canvas>
@@ -53,7 +53,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e4?(n/1e3).toFixed(1)+'k':Math.floor(n);
 const RC=['#b0b0b0','#55dd55','#4c8cff','#b455ff','#ffaa22','#ff4444'];
 let ws,S=null,CFG=null,tab=null,chat=[],rank=[],toastT;
-let pixelStarted=false,tt=0,hero=null,mon=null,bossM=null,others=new Map(),fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
+let pixelStarted=false,tt=0,hero=null,mon=null,bossM=null,others=new Map(),spellFx=[],fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
 const clock={t:performance.now(),get(){const n=performance.now(),d=(n-this.t)/1000;this.t=n;return Math.min(d,.1)}};
 
 // ---------- conexão ----------
@@ -67,7 +67,7 @@ function toast(x){const t=$('#toast');t.textContent=x;t.hidden=false;clearTimeou
 
 function onMsg(m){
  if(m.t==='cfg'){CFG=m;$('#hud').hidden=false;$('#nav').hidden=false;if(!pixelStarted)initPixel()}
- else if(m.t==='s'){S=m;sync();hud();if(m.act||tab==='fight'||tab==='boss'||(m.ev&&m.ev.items&&m.ev.items.length))render();if(m.ev&&m.ev.msg)toast(m.ev.msg)}
+ else if(m.t==='s'){S=m;if(m.ev&&m.ev.skill){spellFx.push({n:m.ev.skill.n,color:m.ev.skill.color,dmg:m.ev.skill.dmg,t:1});fx.attack=.65;fx.monHit=.45}sync();hud();if(m.act||tab==='fight'||tab==='boss'||(m.ev&&m.ev.items&&m.ev.items.length))render();if(m.ev&&m.ev.msg)toast(m.ev.msg)}
  else if(m.t==='toast')toast(m.x);
  else if(m.t==='chat'){chat.push(m);if(chat.length>80)chat.shift();addChat(m)}
  else if(m.t==='rank'){rank=m.rows;if(tab==='rank')render()}
@@ -101,6 +101,7 @@ function render(){const p=$('#panel');document.querySelectorAll('#nav button').f
   `<button data-a="autoequip" style="width:100%;margin:8px 0">Equipar melhores itens</button><h3>Mochila (${c.inv.length}/60)</h3>`+
   (c.inv.length?[...c.inv].sort((a,b)=>b.rar-a.rar||b.lv-a.lv).map(i=>{const cur=c.eq[i.slot],d=Math.round(score(i)-(cur?score(cur):0));
    return`<div class="row"><div>${iName(i)}<small>${iStat(i)} <span style="color:${d>=0?'#6c6':'#e66'}">${d>=0?'▲':'▼'}${Math.abs(d)}</span></small></div><button data-a="equip" data-id="${i.id}">Usar</button><button data-a="sell" data-id="${i.id}">${fmt(i.sv)}💰</button></div>`}).join(''):'<p>Vazia. Derrote monstros para conseguir itens.</p>')}
+ else if(tab==='magic'){h=`<h3>Poderes e magias</h3><p>Desbloqueie habilidades ao subir de nível. As magias são lançadas automaticamente durante o combate.</p>`+(c.skills||[]).map(sk=>`<div class="row"><div><b style="color:${sk.color}">✦ ${esc(sk.n)}</b><small>Nível ${sk.lv} · dano x${sk.dmg}${sk.unlocked?' · DESBLOQUEADO':' · Bloqueado'}</small></div><span>${sk.unlocked?'✨':'🔒'}</span></div>`).join('')+`<p style="color:#a9a3c0">Derrote monstros para desbloquear poderes mais fortes.</p>`}
  else if(tab==='up'){h=`<h3>Melhorias</h3><p>Ouro: ${fmt(c.gold)}</p>`+Object.keys(UPN).map(k=>`<div class="row"><div>${UPN[k]}<small>Nível ${c.up[k]}/50</small></div><button data-a="up" data-s="${k}" ${c.gold<c.upc[k]||c.up[k]>=50?'disabled':''}>${fmt(c.upc[k])}💰</button></div>`).join('')}
  else if(tab==='boss'){const b=S.boss,B=CFG.BOSS,dead=b.hp<=0;
   h=`<h3>Chefe mundial: ${esc(B.n)}</h3><div class="bar"><i style="background:#c9a52a;width:${b.hp/b.max*100}%"></i><span>${fmt(b.hp)} / ${fmt(b.max)}</span></div>`+
@@ -181,6 +182,7 @@ function pixelLoop(){
  const c=S.c,def=CFG.MON[c.mon],attacking=!!c.auto&&fx.attack<=.05,mx=205+(fx.monsterAttack>0?Math.sin(tt*22)*8:Math.sin(tt*2)*2),foot=139,hx=112+(c.auto?Math.sin(tt*7)*2:0);
  for(let i=0;i<10;i++){const x=(i*37+Math.floor(tt*7))%PW,y=45+(i*29)%110;rect(x,y,1,1,i%2?'#9cae74':'#b7a76d')}
  drawMonster(mx,foot,def,def.n,1,fx.monsterAttack>0,fx.monHit>0,false);
+ if(spellFx.length){spellFx=spellFx.filter(a=>a.t>0);for(const a of spellFx){const p=1-a.t;px.globalAlpha=Math.max(0,a.t);for(let j=0;j<7;j++){const xx=hx+25+p*28+j*3,yy=115+Math.sin((p*8+j)*2)*7;rect(xx,yy,3,3,a.color)}txt(a.n,(hx+mx)/2,96,a.color,7);txt('-'+a.dmg,mx,89,'#fff2a8',7);a.t-=.06}px.globalAlpha=1}
  if(S.boss&&S.boss.hp>0){drawMonster(270,124,CFG.BOSS,CFG.BOSS.n,.88,false,false,true);barPix(244,62,48,S.boss.hp/S.boss.max,'#e54c4c')}
  drawHero(hx,141,c.cls,c.name,1,c.auto&&(fx.attack>0||Math.sin(tt*9)>.5),fx.heroHit>0);
  if(c.auto&&Math.sin(tt*9)>.84){rect(hx+16,111,5,2,'#fff3a1');rect(hx+20,107,2,7,'#f5bc4f');rect(hx+24,114,3,2,'#ffefc0')}

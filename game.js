@@ -98,7 +98,7 @@ function kill(c, m, s, ev) {
   const xp = Math.floor(m.xp * s.xpm), g = Math.floor(m.g * (0.8 + R() * 0.4));
   ev.xp += xp; ev.gold += g; ev.kills++; c.kills++; c.gold += g;
   ev.lv += addXp(c, xp);
-  if (R() < 0.1) give(c, mkItem(m.lv), ev);
+  if (R() < 0.15) give(c, mkItem(m.lv), ev);
 }
 function fight(c, dt, skill = null) {
   const m = MON[c.mon], s = stats(c);
@@ -121,7 +121,7 @@ function offline(c, secs) {
   if (!kills) return ev;
   ev.kills = kills; ev.xp = Math.floor(kills * m.xp * s.xpm); ev.gold = Math.floor(kills * m.g);
   c.gold += ev.gold; c.kills += kills; ev.lv = addXp(c, ev.xp);
-  const n = Math.min(40, Math.round(kills * 0.1));
+  const n = Math.min(40, Math.round(kills * 0.12));
   for (let i = 0; i < n; i++) give(c, mkItem(m.lv), ev);
   return ev;
 }

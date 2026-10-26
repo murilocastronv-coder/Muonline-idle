@@ -100,12 +100,12 @@ function kill(c, m, s, ev) {
   ev.lv += addXp(c, xp);
   if (R() < 0.1) give(c, mkItem(m.lv), ev);
 }
-function fight(c, dt) {
+function fight(c, dt, skill = null) {
   const m = MON[c.mon], s = stats(c);
-  const ev = { xp: 0, gold: 0, items: [], kills: 0, died: false, lv: 0 };
+  const ev = { xp: 0, gold: 0, items: [], kills: 0, died: false, lv: 0 }; if(skill) ev.skill={id:skill.id,n:skill.n,color:skill.color,dmg:Math.floor(s.atk*skill.dmg)};
   if (c.hp == null || c.hp > s.hp) c.hp = s.hp;
   if (c.mhp == null) c.mhp = m.hp;
-  c.mhp -= Math.max(1, s.atk - m.def / 2) * s.spd * dt;
+  c.mhp -= Math.max(1, s.atk - m.def / 2) * s.spd * dt + (skill ? Math.max(1, Math.floor(s.atk * skill.dmg)) : 0);
   c.hp = Math.min(s.hp, c.hp + s.hp * 0.01 * dt) - Math.max(0, m.atk - s.def * 0.5) * 0.7 * dt;
   if (c.hp <= 0) { c.hp = s.hp; c.mhp = m.hp; ev.died = true; return ev; }
   if (c.mhp <= 0) { kill(c, m, s, ev); c.mhp = m.hp; }
@@ -126,5 +126,5 @@ function offline(c, secs) {
   return ev;
 }
 
-module.exports = { CLASSES, MON, BOSS, SLOTS, RAR, MAXINV, xpNext, upCost, newChar, stats, addXp, mkItem,
+module.exports = { CLASSES, MON, BOSS, SLOTS, RAR, MAXINV, SKILLS, skillsFor, xpNext, upCost, newChar, stats, addXp, mkItem,
   give, autoEquip, enhance, enhCost, sell, fight, offline };

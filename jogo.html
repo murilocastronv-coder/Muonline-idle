@@ -14,7 +14,7 @@ canvas{position:fixed;inset:0;width:100%;height:100%;image-rendering:pixelated;i
 .bar{height:16px;background:#0009;border:1px solid #d9a44155;border-radius:3px;overflow:hidden;margin:3px 0;position:relative}
 .bar i{display:block;height:100%;width:0;transition:width .3s}
 .bar span{position:absolute;inset:0;text-align:center;font-size:11px;line-height:15px;text-shadow:0 1px 2px #000}
-#nav{bottom:env(safe-area-inset-bottom,0);display:flex;gap:6px}
+#nav{bottom:env(safe-area-inset-bottom,0);display:flex;gap:6px;overflow-x:auto;scrollbar-width:thin}
 button,select,input{font:inherit;color:#ece6d6}
 button{background:#2b2147;border:1px solid #d9a441;border-radius:4px;padding:10px 12px;min-height:46px}
 button:active{background:#d9a441;color:#12152b}
@@ -43,7 +43,7 @@ input,select{background:#0d0f20;border:1px solid #6d6590;border-radius:4px;paddi
 <div class="bar"><i id="mb" style="background:#c9822a"></i><span id="mt"></span></div></div>
 <div id="toast" hidden></div><div id="panel" hidden></div>
 <div id="nav" class="ui" hidden>
-<button data-tab="fight">⚔️</button><button data-tab="inv">🎒</button><button data-tab="up">⬆️</button><button data-tab="magic">✨</button>
+<button data-tab="fight">🎯</button><button data-tab="pvp">⚔️</button><button data-tab="inv">🎒</button><button data-tab="up">⬆️</button><button data-tab="magic">✨</button>
 <button data-tab="boss">👑</button><button data-tab="rank">🏆</button><button data-tab="chat">💬</button></div>
 <div id="off" hidden></div>
 <canvas id="world" aria-label="Mundo 2D pixel art"></canvas>
@@ -103,6 +103,14 @@ function render(){const p=$('#panel');document.querySelectorAll('#nav button').f
    return`<div class="row"><div>${iName(i)}<small>${iStat(i)} <span style="color:${d>=0?'#6c6':'#e66'}">${d>=0?'▲':'▼'}${Math.abs(d)}</span></small></div><button data-a="equip" data-id="${i.id}">Usar</button><button data-a="sell" data-id="${i.id}">${fmt(i.sv)}💰</button></div>`}).join(''):'<p>Vazia. Derrote monstros para conseguir itens.</p>')}
  else if(tab==='magic'){h=`<h3>Poderes e magias</h3><p>Desbloqueie habilidades ao subir de nível. As magias são lançadas automaticamente durante o combate.</p>`+(c.skills||[]).map(sk=>`<div class="row"><div><b style="color:${sk.color}">✦ ${esc(sk.n)}</b><small>Nível ${sk.lv} · dano x${sk.dmg}${sk.unlocked?' · DESBLOQUEADO':' · Bloqueado'}</small></div><span>${sk.unlocked?'✨':'🔒'}</span></div>`).join('')+`<p style="color:#a9a3c0">Derrote monstros para desbloquear poderes mais fortes.</p>`}
  else if(tab==='up'){h=`<h3>Melhorias</h3><p>Ouro: ${fmt(c.gold)}</p>`+Object.keys(UPN).map(k=>`<div class="row"><div>${UPN[k]}<small>Nível ${c.up[k]}/50</small></div><button data-a="up" data-s="${k}" ${c.gold<c.upc[k]||c.up[k]>=50?'disabled':''}>${fmt(c.upc[k])}💰</button></div>`).join('')}
+ else if(tab==='pvp'){
+  const pv=S.pvp||{}, duel=pv.duel;
+  h=`<h3>Arena PvP</h3><p>Desafie outro jogador online para um duelo voluntário. O vencedor recebe ouro, XP e chance de drop de equipamento.</p>`+
+  (pv.incoming?`<div class="row"><div><b>${esc(pv.incoming.n)}</b><small>Desafiou você · Nv ${pv.incoming.l}</small></div><button data-a="pvpAccept">Aceitar</button></div>`:'')+
+  (duel?`<h3>Duelo contra ${esc(duel.n)}</h3><div class="bar"><i style="background:#e34e59;width:${Math.max(0,duel.hp/duel.max*100)}%"></i><span>HP adversário ${fmt(duel.hp)} / ${fmt(duel.max)}</span></div><button class="big" data-a="pvpAttack">⚔️ ATACAR</button><button data-a="pvpLeave" style="width:100%">Abandonar duelo</button>`:
+  `<h3>Jogadores online</h3>`+(S.online.filter(o=>o.id!==undefined&&o.n!==c.name).length?S.online.filter(o=>o.id!==undefined&&o.n!==c.name).map(o=>`<div class="row"><div><b>${esc(o.n)}</b><small>${CFG.CLASSES[o.c].n} · Nv ${o.l}</small></div><button data-a="pvpChallenge" data-id="${o.id}">Desafiar</button></div>`).join(''):'<p>Nenhum outro jogador online agora. Convide alguém para entrar no jogo.</p>'))+
+  `<p style="color:#a9a3c0">PvP não acontece sem consentimento: o jogador precisa aceitar o desafio.</p>`;
+ }
  else if(tab==='boss'){const b=S.boss,B=CFG.BOSS,dead=b.hp<=0;
   h=`<h3>Chefe mundial: ${esc(B.n)}</h3><div class="bar"><i style="background:#c9a52a;width:${b.hp/b.max*100}%"></i><span>${fmt(b.hp)} / ${fmt(b.max)}</span></div>`+
   (dead?`<p>Derrotado. Renasce em ${Math.max(0,Math.ceil((b.at-Date.now())/1000))}s.</p>`:c.lvl<B.lv?`<p>Requer nível ${B.lv}.</p>`:`<button class="big" data-a="boss">Atacar chefe</button>`)+

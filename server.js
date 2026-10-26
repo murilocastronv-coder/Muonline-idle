@@ -65,12 +65,12 @@ app.use(express.static('public'));
 // A página inicial está na raiz do repositório, não dentro de /public.
 app.get('/', (_, r) => r.sendFile(path.join(__dirname, 'index.html')));
 app.get('/jogo.html', (_, r) => r.sendFile(path.join(__dirname, 'jogo.html')));
-app.get('/healthz', (_, r) => r.send('ok'));
+app.get('/healthz', (_, r) => r.json({ status: 'ok', database: pool ? 'postgres' : 'memory', persistentAccounts: !!pool }));
 const h = (f) => (q, r) => f(q, r).catch((e) => { console.error(e); r.status(500).json({ error: 'Erro no servidor.' }); });
 const token = (id) => jwt.sign({ id }, SECRET, { expiresIn: '30d' });
 
 app.get('/api/stats', h(async (q, r) => {
-  r.json({ accounts: await db.count(), online: online.size,
+  r.json({ accounts: await db.count(), online: online.size, database: pool ? 'postgres' : 'memory',
     boss: { n: G.BOSS.n, alive: boss.hp > 0, hp: Math.max(0, Math.floor(boss.hp)), max: G.BOSS.hp },
     top: (await db.top()).slice(0, 5).map((x) => ({ n: x.name, l: x.lvl })),
     cfg: { MON: G.MON, BOSS: G.BOSS, CLASSES: G.CLASSES, SLOTS: G.SLOTS, RAR: G.RAR } });
@@ -258,7 +258,16 @@ wss.on('connection', (ws) => {
     act(o, m);
   });
   ws.on('close', () => {
-    if (o && online.get(o.id) === o) { online.delete(o.id); save(o); }
+    if (o && online.get(o.id) === o) {
+      if (o.duelId) {
+        const d=duels.get(o.duelId), otherId=d?(d.a===o.id?d.b:d.a):null, other=otherId?online.get(otherId):null;
+        if(other){other.duelId=null;J(other.ws,{t:'toast',x:'O adversário desconectou; duelo cancelado.'});push(other);}
+        if(d)duels.delete(d.id);o.duelId=null;
+      }
+      pvpInvites.delete(o.id);
+      for(const [target,challenger] of pvpInvites)if(challenger===o.id)pvpInvites.delete(target);
+      online.delete(o.id); save(o);
+    }
   });
 });
 

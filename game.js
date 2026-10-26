@@ -16,6 +16,8 @@ const BOSS = { n: 'Rei Esqueleto', lv: 15, hp: 30000, col: 0xffcc00, sz: 2.4, re
 const SLOTS = { weapon: 'Lâmina', helmet: 'Elmo', armor: 'Armadura', boots: 'Botas', ring: 'Anel' };
 const RAR = ['Comum', 'Incomum', 'Raro', 'Épico', 'Lendário', 'Mítico'];
 const MAXINV = 60;
+const SKILLS = { dk: [{id:'slash',n:'Energy Slash',lv:1,dmg:1.5,color:'#ffd56b'},{id:'spin',n:'Whirlwind',lv:5,dmg:2.2,color:'#ff914d'}], dw: [{id:'energy',n:'Energy Ball',lv:1,dmg:1.6,color:'#8be9ff'},{id:'fire',n:'Fire Burst',lv:5,dmg:2.4,color:'#ff7b45'}] };
+function skillsFor(c){return (SKILLS[c.cls]||SKILLS.dk).map(s=>({...s,unlocked:c.lvl>=s.lv}));}
 
 const xpNext = (l) => Math.floor(40 * Math.pow(l, 1.8));
 const upCost = (lv) => Math.floor(50 * Math.pow(1.35, lv));

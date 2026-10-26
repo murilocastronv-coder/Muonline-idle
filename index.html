@@ -66,6 +66,7 @@ footer{padding:26px 0 40px;border-top:1px solid var(--line);color:var(--mute);fo
 <div><b id="n-acc">–</b><small>contas criadas</small></div>
 <div><b id="n-on">–</b><small><span class="dot"></span>online agora</small></div>
 <div><b id="n-boss">–</b><small id="t-boss">chefe mundial</small></div>
+<p id="db-status" style="margin:8px 0 0;color:#e8bc68;font-size:13px" role="status"></p>
 </div>
 </div>
 
@@ -153,7 +154,7 @@ function build(c){built=true;
  $('#rar-l').innerHTML=c.RAR.map((r,i)=>`<span style="color:${RC[i]}">${esc(r)}</span>`).join('')}
 
 async function load(){try{const s=await (await fetch('/api/stats')).json();
- $('#n-acc').textContent=fmt(s.accounts);$('#n-on').textContent=fmt(s.online);
+ $('#n-acc').textContent=s.database==='postgres'?fmt(s.accounts):'—';$('#db-status').textContent=s.database==='postgres'?'Contas salvas no banco permanente.':'Banco permanente não conectado: as contas podem sumir ao reiniciar.';$('#n-on').textContent=fmt(s.online);
  $('#n-boss').textContent=s.boss.alive?Math.round(s.boss.hp/s.boss.max*100)+'%':'caído';
  $('#t-boss').textContent=s.boss.alive?'vida do chefe mundial':'chefe renascendo';
  $('#top-l').innerHTML=s.top.length?s.top.map(t=>`<li>${esc(t.n)} <span style="color:var(--mute)">· nível ${t.l}</span></li>`).join(''):'<li>Seja o primeiro a entrar.</li>';

@@ -95,6 +95,9 @@ app.post('/api/login', h(async (q, r) => {
 const server = http.createServer(app);
 const wss = new WebSocketServer({ server, path: '/ws' });
 const online = new Map(); // id -> sessão
+const pvpInvites = new Map(); // target account id -> challenger account id
+const duels = new Map(); // duel id -> {a,b,hpA,hpB,maxA,maxB,lastA,lastB}
+let duelSeq = 1;
 const boss = { hp: G.BOSS.hp, dmg: new Map(), respawnAt: 0 };
 const J = (ws, o) => ws.readyState === 1 && ws.send(JSON.stringify(o));
 const bc = (o) => online.forEach((p) => J(p.ws, o));
@@ -110,7 +113,8 @@ function view(o) {
       mon: c.mon, auto: c.auto, kills: c.kills, bk: c.bossKills, st: s, up: c.up,
       upc: Object.fromEntries(Object.keys(c.up).map((k) => [k, G.upCost(c.up[k])])), skills: G.skillsFor(c),
       inv: c.inv.map(dec), eq: Object.fromEntries(Object.entries(c.eq).map(([k, v]) => [k, dec(v)])) },
-    online: [...online.values()].map((p) => ({ n: p.name, c: p.c.cls, l: p.c.lvl })),
+    online: [...online.values()].map((p) => ({ id: p.id, n: p.name, c: p.c.cls, l: p.c.lvl })),
+    pvp: (() => { const d = o.duelId ? duels.get(o.duelId) : null; const opponentId = d ? (d.a === o.id ? d.b : d.a) : null; const enemy = opponentId ? online.get(opponentId) : null; return { incoming: pvpInvites.has(o.id) ? (() => { const p=online.get(pvpInvites.get(o.id)); return p ? {id:p.id,n:p.name,l:p.c.lvl}:null; })() : null, duel: d && enemy ? {id:enemy.id,n:enemy.name,hp:d.a===o.id?d.hpB:d.hpA,max:d.a===o.id?d.maxB:d.maxA} : null }; })(),
     boss: { hp: Math.max(0, Math.floor(boss.hp)), max: G.BOSS.hp, at: boss.respawnAt,
       top: [...boss.dmg.values()].sort((a, b) => b[1] - a[1]).slice(0, 5) } };
 }
@@ -163,6 +167,55 @@ function act(o, m) {
       c.gold -= cost; c.up[k]++; break;
     }
     case 'boss': msg = hitBoss(o); break;
+    case 'pvpChallenge': {
+      const target = online.get(Number(m.id));
+      if (!target || target.id === o.id) { msg = 'Jogador indisponível.'; break; }
+      if (o.duelId || target.duelId) { msg = 'Um dos jogadores já está em duelo.'; break; }
+      pvpInvites.set(target.id, o.id);
+      J(target.ws, {t:'toast',x:o.name+' desafiou você para um duelo PvP! Abra a aba PvP para aceitar.'});
+      push(target); msg = 'Desafio enviado para '+target.name+'.'; break;
+    }
+    case 'pvpAccept': {
+      const challengerId = pvpInvites.get(o.id), challenger = challengerId ? online.get(challengerId) : null;
+      pvpInvites.delete(o.id);
+      if (!challenger || challenger.duelId || o.duelId) { msg = 'Desafio expirado ou jogador indisponível.'; break; }
+      const sa=G.stats(challenger.c), sb=G.stats(o.c), did=String(duelSeq++);
+      const d={id:did,a:challenger.id,b:o.id,hpA:sa.hp,hpB:sb.hp,maxA:sa.hp,maxB:sb.hp,lastA:0,lastB:0};
+      duels.set(did,d); challenger.duelId=did; o.duelId=did;
+      J(challenger.ws,{t:'toast',x:o.name+' aceitou o duelo!'});
+      push(challenger); push(o); return;
+    }
+    case 'pvpAttack': {
+      const d=o.duelId?duels.get(o.duelId):null;
+      if(!d){msg='Você não está em um duelo.';break;}
+      const side=d.a===o.id?'A':d.b===o.id?'B':null;
+      if(!side){msg='Duelo inválido.';break;}
+      const last=side==='A'?'lastA':'lastB';
+      if(Date.now()-d[last]<900){msg='Espere o próximo golpe.';break;}
+      d[last]=Date.now();
+      const targetId=side==='A'?d.b:d.a, target=online.get(targetId);
+      if(!target){duels.delete(d.id);delete o.duelId;msg='O adversário saiu.';break;}
+      const damage=Math.max(5,Math.floor(G.stats(c).atk*(0.8+Math.random()*0.7)));
+      if(side==='A')d.hpB=Math.max(0,d.hpB-damage);else d.hpA=Math.max(0,d.hpA-damage);
+      if(d.hpA===0||d.hpB===0){
+        const winner=d.hpA===0?target:o, loser=d.hpA===0?o:target;
+        winner.c.gold+=100+loser.c.lvl*25; G.addXp(winner.c,100+loser.c.lvl*40);
+        const ev={items:[]}; if(Math.random()<0.5)G.give(winner.c,G.mkItem(winner.c.lvl,1.5),ev);
+        winner.duelId=null;loser.duelId=null;duels.delete(d.id);
+        pvpInvites.delete(winner.id);pvpInvites.delete(loser.id);
+        J(winner.ws,{t:'toast',x:'Vitória PvP! Ganhou ouro, XP'+(ev.items.length?' e um item dropado!':'!')});
+        J(loser.ws,{t:'toast',x:'Você perdeu o duelo. Tente novamente!'});
+        save(winner);save(loser);push(winner);push(loser);return;
+      }
+      J(o.ws,{t:'toast',x:'Você causou '+damage+' de dano!'});
+      J(target.ws,{t:'toast',x:'Você recebeu '+damage+' de dano!'});
+      push(o);push(target);return;
+    }
+    case 'pvpLeave': {
+      const d=o.duelId?duels.get(o.duelId):null;
+      if(d){const otherId=d.a===o.id?d.b:d.a,other=online.get(otherId);if(other){other.duelId=null;J(other.ws,{t:'toast',x:'O adversário saiu do duelo.'});push(other);}duels.delete(d.id);}
+      o.duelId=null;pvpInvites.delete(o.id);msg='Você saiu do PvP.';break;
+    }
     case 'chat': {
       const x = String(m.x || '').trim().slice(0, 200), now = Date.now();
       if (x && now - o.ct > 800) { o.ct = now; bc({ t: 'chat', n: o.name, x }); }

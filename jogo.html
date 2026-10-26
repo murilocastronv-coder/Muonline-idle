@@ -65,7 +65,7 @@ const send=m=>ws&&ws.readyState===1&&ws.send(JSON.stringify(m));
 function toast(x){const t=$('#toast');t.textContent=x;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2600)}
 
 function onMsg(m){
- if(m.t==='cfg'){CFG=m;$('#hud').hidden=false;$('#nav').hidden=false;if(!R3)init3D()}
+ if(m.t==='cfg'){CFG=m;$('#hud').hidden=false;$('#nav').hidden=false;if(!pixelStarted)initPixel()}
  else if(m.t==='s'){S=m;sync();hud();if(m.act||tab==='fight'||tab==='boss'||(m.ev&&m.ev.items&&m.ev.items.length))render();if(m.ev&&m.ev.msg)toast(m.ev.msg)}
  else if(m.t==='toast')toast(m.x);
  else if(m.t==='chat'){chat.push(m);if(chat.length>80)chat.shift();addChat(m)}
@@ -121,7 +121,7 @@ $('#nav').onclick=e=>{const b=e.target.closest('[data-tab]');if(!b)return;tab=ta
 // ---------- Renderizador 2D pixel art otimizado ----------
 const world=$('#world'),px=world.getContext('2d',{alpha:false});
 const PW=320,PH=180;world.width=PW;world.height=PH;px.imageSmoothingEnabled=false;
-let tt=0,hero=null,mon=null,bossM=null,others=new Map(),fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
+let pixelStarted=false,tt=0,hero=null,mon=null,bossM=null,others=new Map(),fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
 const pal={dk:{armor:'#a92f36',light:'#ff6c58',dark:'#4a1e36',hair:'#d7d4db',skin:'#f1c19a',weapon:'#d9e5ef'},dw:{armor:'#4936a8',light:'#9278ff',dark:'#211d55',hair:'#dfd7ff',skin:'#eac09f',weapon:'#7deaff'},elf:{armor:'#238b68',light:'#72e6a7',dark:'#154a43',hair:'#f0d17b',skin:'#f4c8a4',weapon:'#b4f6a1'},mg:{armor:'#bd5b28',light:'#ffc15b',dark:'#572d34',hair:'#31233b',skin:'#e9b995',weapon:'#e7e8ef'},dl:{armor:'#542b72',light:'#b77cff',dark:'#281c42',hair:'#e5d5b5',skin:'#efc19d',weapon:'#ffd56b'},sm:{armor:'#2867a7',light:'#6bd7ff',dark:'#1c315e',hair:'#9a6bce',skin:'#edc3a7',weapon:'#d5a6ff'}};
 function rect(x,y,w,h,c){px.fillStyle=c;px.fillRect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)))}
 function txt(t,x,y,c,size){px.font=(size||7)+'px monospace';px.textAlign='center';px.fillStyle='#120f20';px.fillText(t,x+1,y+1);px.fillStyle=c||'#fff';px.fillText(t,x,y)}
@@ -171,11 +171,11 @@ function drawWorld(){
 }
 function sync(){
  if(!S||!CFG)return;const c=S.c,def=CFG.MON[c.mon];
- if(lastHp!==null&&c.hp<lastHp-1)fx.heroHit=.55;if(lastMhp!==null&&c.mhp<lastMhp-1){fx.monHit=.35;fx.attack=.45;fx.monsterAttack=.45}if(c.kills>lastKills){fx.kill=.7;fx.monHit=.7}
+ if(lastHp!==null&&c.hp<lastHp-1){fx.heroHit=.55;fx.monsterAttack=.42;}if(lastMhp!==null&&c.mhp<lastMhp-1){fx.monHit=.35;fx.attack=.45;fx.monsterAttack=.45}if(c.kills>lastKills){fx.kill=.7;fx.monHit=.7}
  lastHp=c.hp;lastMhp=c.mhp;lastKills=c.kills;hero={cls:c.cls,name:c.name};mon={d:def,name:def.n};bossM={d:CFG.BOSS,name:CFG.BOSS.n};
  const want=new Map();S.online.filter(p=>p.n!==c.name).slice(0,8).forEach((p,i)=>want.set(p.n,{...p,i}));for(const k of others.keys())if(!want.has(k))others.delete(k);for(const[k,p]of want)others.set(k,p);
 }
-function initPixel(){world.style.display='block';requestAnimationFrame(pixelLoop)}
+function initPixel(){if(pixelStarted)return;pixelStarted=true;world.style.display='block';requestAnimationFrame(pixelLoop)}
 function pixelLoop(){
  requestAnimationFrame(pixelLoop);tt+=.035;if(!S||!CFG){drawWorld();txt('CARREGANDO O REINO...',160,92,'#f3d58b',9);return}drawWorld();
  const c=S.c,def=CFG.MON[c.mon],attacking=!!c.auto&&fx.attack<=.05,mx=205+(fx.monsterAttack>0?Math.sin(tt*22)*8:Math.sin(tt*2)*2),foot=139,hx=112+(c.auto?Math.sin(tt*7)*2:0);

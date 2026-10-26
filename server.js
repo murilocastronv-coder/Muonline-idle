@@ -60,6 +60,7 @@ app.use(express.json({ limit: '2kb' }));
 app.use(express.static('public'));
 // A página inicial está na raiz do repositório, não dentro de /public.
 app.get('/', (_, r) => r.sendFile(path.join(__dirname, 'index.html')));
+app.get('/jogo.html', (_, r) => r.sendFile(path.join(__dirname, 'jogo.html')));
 app.get('/healthz', (_, r) => r.send('ok'));
 const h = (f) => (q, r) => f(q, r).catch((e) => { console.error(e); r.status(500).json({ error: 'Erro no servidor.' }); });
 const token = (id) => jwt.sign({ id }, SECRET, { expiresIn: '30d' });

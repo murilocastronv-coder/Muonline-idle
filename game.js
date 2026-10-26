@@ -127,7 +127,8 @@ function fight(c, dt, skill = null) {
   if (c.hp == null || c.hp > s.hp) c.hp = s.hp;
   if (c.mhp == null) c.mhp = m.hp;
   c.mhp -= Math.max(1, s.atk - m.def / 2) * s.spd * dt + (skill ? Math.max(1, Math.floor(s.atk * skill.dmg)) : 0);
-  const incoming = Math.max(5, (m.atk - s.def * 0.5) * 0.7) * dt;\n  c.hp = Math.min(s.hp, c.hp + s.hp * 0.005 * dt) - incoming;
+  const incoming = Math.max(5, (m.atk - s.def * 0.5) * 0.7) * dt;
+  c.hp = Math.min(s.hp, c.hp + s.hp * 0.005 * dt) - incoming;
   if (c.hp <= 0) { c.hp = s.hp; c.mhp = m.hp; ev.died = true; return ev; }
   if (c.mhp <= 0) { kill(c, m, s, ev); c.mhp = m.hp; }
   return ev;

@@ -77,6 +77,7 @@ app.get('/api/stats', h(async (q, r) => {
 }));
 app.get('/api/accounts', h(async (q, r) => { r.json({ accounts: await db.accounts() }); }));
 app.post('/api/register', h(async (q, r) => {
+  if (!pool) return r.status(503).json({ error: 'Cadastro pausado: o banco permanente ainda não está conectado. Configure DATABASE_URL na Render.' });
   const { name, pass, cls } = q.body || {};
   if (!/^[A-Za-z0-9_]{3,16}$/.test(name || '') || typeof pass !== 'string' || pass.length < 6 || pass.length > 72 || !G.CLASSES[cls])
     return r.status(400).json({ error: 'Nome: 3-16 letras/números. Senha: mínimo 6 caracteres.' });
@@ -85,6 +86,7 @@ app.post('/api/register', h(async (q, r) => {
   r.json({ token: token(id) });
 }));
 app.post('/api/login', h(async (q, r) => {
+  if (!pool) return r.status(503).json({ error: 'Login indisponível: o banco permanente ainda não está conectado. Configure DATABASE_URL na Render.' });
   const { name, pass } = q.body || {};
   const row = typeof name === 'string' && typeof pass === 'string' ? await db.byName(name) : null;
   if (!row || !(await bcrypt.compare(pass, row.pass))) return r.status(401).json({ error: 'Nome ou senha incorretos.' });

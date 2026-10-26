@@ -57,8 +57,9 @@ let R3,scene,cam,hero,mon,bossM,others=new Map(),parts=[],fx={hit:0,die:0};
 const clock={t:performance.now(),get(){const n=performance.now(),d=(n-this.t)/1000;this.t=n;return Math.min(d,.1)}};
 
 // ---------- conexão ----------
-function connect(tk){ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
+function connect(tk){if(!pixelStarted)initPixel();ws=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws');
  ws.onopen=()=>ws.send(JSON.stringify({t:'auth',token:tk}));
+ ws.onerror=()=>{if(world&&px){drawWorld();txt('ERRO DE CONEXAO',160,88,'#ff9a8f',10);txt('Tente atualizar a pagina',160,101,'#f3d58b',7)}};
  ws.onmessage=e=>onMsg(JSON.parse(e.data));
  ws.onclose=()=>{if(CFG){toast('Conexão perdida. Reconectando...');setTimeout(()=>location.reload(),3000)}}}
 const send=m=>ws&&ws.readyState===1&&ws.send(JSON.stringify(m));
@@ -177,7 +178,7 @@ function sync(){
 }
 function initPixel(){if(pixelStarted)return;pixelStarted=true;world.style.display='block';requestAnimationFrame(pixelLoop)}
 function pixelLoop(){
- requestAnimationFrame(pixelLoop);tt+=.035;if(!S||!CFG){drawWorld();txt('CARREGANDO O REINO...',160,92,'#f3d58b',9);return}drawWorld();
+ requestAnimationFrame(pixelLoop);tt+=.035;if(!S||!CFG){drawWorld();txt('MU ONLINE IDLE',160,76,'#f3d58b',11);txt('Conectando ao reino...',160,92,'#ffffff',7);return}drawWorld();
  const c=S.c,def=CFG.MON[c.mon],attacking=!!c.auto&&fx.attack<=.05,mx=205+(fx.monsterAttack>0?Math.sin(tt*22)*8:Math.sin(tt*2)*2),foot=139,hx=112+(c.auto?Math.sin(tt*7)*2:0);
  for(let i=0;i<10;i++){const x=(i*37+Math.floor(tt*7))%PW,y=45+(i*29)%110;rect(x,y,1,1,i%2?'#9cae74':'#b7a76d')}
  drawMonster(mx,foot,def,def.n,1,fx.monsterAttack>0,fx.monHit>0,false);

@@ -108,7 +108,7 @@ footer{padding:26px 0 40px;border-top:1px solid var(--line);color:var(--mute);fo
 
 <section><div class="wrap">
 <h2>Melhores jogadores</h2><p class="sub">Ranking por nível, atualizado em tempo real.</p>
-<ol id="top-l"><li>Carregando...</li></ol></div></section>
+<ol id="top-l"><li>Carregando...</li></ol><h2 style="margin-top:24px">Contas criadas</h2><p class="sub">Lista pública dos nomes dos personagens cadastrados. Senhas e dados privados nunca são exibidos.</p><div id="accounts-l" class="grid g2"><p>Carregando contas...</p></div></div></section>
 
 <section id="breve"><div class="wrap">
 <h2>Em breve</h2><p class="sub">Ainda não estão no jogo.</p>
@@ -157,6 +157,6 @@ async function load(){try{const s=await (await fetch('/api/stats')).json();
  $('#n-boss').textContent=s.boss.alive?Math.round(s.boss.hp/s.boss.max*100)+'%':'caído';
  $('#t-boss').textContent=s.boss.alive?'vida do chefe mundial':'chefe renascendo';
  $('#top-l').innerHTML=s.top.length?s.top.map(t=>`<li>${esc(t.n)} <span style="color:var(--mute)">· nível ${t.l}</span></li>`).join(''):'<li>Seja o primeiro a entrar.</li>';
- if(!built)build(s.cfg)}catch(e){}}
+ if(!built)build(s.cfg);const a=await (await fetch('/api/accounts')).json();$('#accounts-l').innerHTML=a.accounts.length?a.accounts.map(p=>`<div class="cls"><b>${esc(p.name)}</b><br><small style="color:var(--mute)">Nível ${p.lvl}</small></div>`).join(''):'<p>Nenhuma conta cadastrada ainda.</p>'}catch(e){}}
 load();setInterval(load,15000);
 </script></body></html>

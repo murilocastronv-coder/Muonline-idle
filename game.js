@@ -16,7 +16,28 @@ const BOSS = { n: 'Rei Esqueleto', lv: 15, hp: 30000, col: 0xffcc00, sz: 2.4, re
 const SLOTS = { weapon: 'Lâmina', helmet: 'Elmo', armor: 'Armadura', boots: 'Botas', ring: 'Anel' };
 const RAR = ['Comum', 'Incomum', 'Raro', 'Épico', 'Lendário', 'Mítico'];
 const MAXINV = 60;
-const SKILLS = { dk: [{id:'slash',n:'Energy Slash',lv:1,dmg:1.5,color:'#ffd56b'},{id:'spin',n:'Whirlwind',lv:5,dmg:2.2,color:'#ff914d'}], dw: [{id:'energy',n:'Energy Ball',lv:1,dmg:1.6,color:'#8be9ff'},{id:'fire',n:'Fire Burst',lv:5,dmg:2.4,color:'#ff7b45'}] };
+const SKILLS = {
+  dk: [
+    {id:'slash',n:'Energy Slash',lv:1,dmg:1.5,color:'#ffd56b',type:'wave'},
+    {id:'spin',n:'Whirlwind',lv:5,dmg:2.0,color:'#ff914d',type:'spin'},
+    {id:'flameblade',n:'Flame Blade',lv:10,dmg:2.5,color:'#ff572e',type:'fire'},
+    {id:'froststrike',n:'Frost Strike',lv:15,dmg:2.9,color:'#79e8ff',type:'ice'},
+    {id:'shockwave',n:'Shockwave',lv:20,dmg:3.3,color:'#ffe8a1',type:'wave'},
+    {id:'dragon',n:'Dragon Slash',lv:25,dmg:3.8,color:'#ff3d23',type:'fire'},
+    {id:'storm',n:'Storm Blade',lv:30,dmg:4.3,color:'#83dfff',type:'lightning'},
+    {id:'inferno',n:'Inferno',lv:35,dmg:5.0,color:'#ff752b',type:'meteor'}
+  ],
+  dw: [
+    {id:'energy',n:'Energy Ball',lv:1,dmg:1.6,color:'#8be9ff',type:'arcane'},
+    {id:'fire',n:'Fireball',lv:5,dmg:2.2,color:'#ff572e',type:'fire'},
+    {id:'ice',n:'Ice Bolt',lv:10,dmg:2.6,color:'#7cecff',type:'ice'},
+    {id:'lightning',n:'Lightning Bolt',lv:15,dmg:3.0,color:'#fff27a',type:'lightning'},
+    {id:'meteor',n:'Meteor Shower',lv:20,dmg:3.5,color:'#ff7438',type:'meteor'},
+    {id:'arcane',n:'Arcane Orb',lv:25,dmg:4.0,color:'#bf7bff',type:'arcane'},
+    {id:'blizzard',n:'Blizzard',lv:30,dmg:4.5,color:'#7bcaff',type:'ice'},
+    {id:'comet',n:'Comet of Chaos',lv:35,dmg:5.2,color:'#ff4dca',type:'meteor'}
+  ]
+};
 function skillsFor(c){return (SKILLS[c.cls]||SKILLS.dk).map(s=>({...s,unlocked:c.lvl>=s.lv}));}
 
 const xpNext = (l) => Math.floor(40 * Math.pow(l, 1.8));
@@ -102,7 +123,7 @@ function kill(c, m, s, ev) {
 }
 function fight(c, dt, skill = null) {
   const m = MON[c.mon], s = stats(c);
-  const ev = { xp: 0, gold: 0, items: [], kills: 0, died: false, lv: 0 }; if(skill) ev.skill={id:skill.id,n:skill.n,color:skill.color,dmg:Math.floor(s.atk*skill.dmg)};
+  const ev = { xp: 0, gold: 0, items: [], kills: 0, died: false, lv: 0 }; if(skill) ev.skill={id:skill.id,n:skill.n,color:skill.color,type:skill.type||'arcane',dmg:Math.floor(s.atk*skill.dmg)};
   if (c.hp == null || c.hp > s.hp) c.hp = s.hp;
   if (c.mhp == null) c.mhp = m.hp;
   c.mhp -= Math.max(1, s.atk - m.def / 2) * s.spd * dt + (skill ? Math.max(1, Math.floor(s.atk * skill.dmg)) : 0);

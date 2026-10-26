@@ -156,7 +156,7 @@ function build(c){built=true;
  $('#rar-l').innerHTML=c.RAR.map((r,i)=>`<span style="color:${RC[i]}">${esc(r)}</span>`).join('')}
 
 async function load(){try{const s=await (await fetch('/api/stats')).json();
- $('#n-acc').textContent=s.database==='postgres'?fmt(s.accounts):'—';$('#db-status').textContent=s.database==='postgres'?'Contas salvas no banco permanente.':'Banco permanente não conectado: as contas podem sumir ao reiniciar.';$('#n-on').textContent=fmt(s.online);
+ $('#n-acc').textContent=s.database==='postgres'?fmt(s.accounts):'—';$('#db-status').textContent=s.database==='postgres'?'Contas salvas no banco permanente.':'Banco permanente não conectado: cadastro pausado para não perder contas. Configure DATABASE_URL na Render.';$('#n-on').textContent=fmt(s.online);
  $('#n-boss').textContent=s.boss.alive?Math.round(s.boss.hp/s.boss.max*100)+'%':'caído';
  $('#t-boss').textContent=s.boss.alive?'vida do chefe mundial':'chefe renascendo';
  $('#top-l').innerHTML=s.top.length?s.top.map(t=>`<li>${esc(t.n)} <span style="color:var(--mute)">· nível ${t.l}</span></li>`).join(''):'<li>Seja o primeiro a entrar.</li>';

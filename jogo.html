@@ -53,7 +53,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e4?(n/1e3).toFixed(1)+'k':Math.floor(n);
 const RC=['#b0b0b0','#55dd55','#4c8cff','#b455ff','#ffaa22','#ff4444'];
 let ws,S=null,CFG=null,tab=null,chat=[],rank=[],toastT;
-let pixelStarted=false,tt=0,hero=null,mon=null,bossM=null,others=new Map(),spellFx=[],fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
+let pixelStarted=false,tt=0,hero=null,mon=null,bossM=null,others=new Map(),spellFx=[],enemyFx=[],fx={heroHit:0,monHit:0,attack:0,monsterAttack:0,kill:0},lastHp=null,lastMhp=null,lastKills=0;
 const clock={t:performance.now(),get(){const n=performance.now(),d=(n-this.t)/1000;this.t=n;return Math.min(d,.1)}};
 
 // ---------- conexão ----------
@@ -180,7 +180,7 @@ function drawWorld(){
 }
 function sync(){
  if(!S||!CFG)return;const c=S.c,def=CFG.MON[c.mon];
- if(lastHp!==null&&c.hp<lastHp-1){fx.heroHit=.55;fx.monsterAttack=.42;}if(lastMhp!==null&&c.mhp<lastMhp-1){fx.monHit=.35;fx.attack=.45;fx.monsterAttack=.45}if(c.kills>lastKills){fx.kill=.7;fx.monHit=.7}
+ if(lastHp!==null&&c.hp<lastHp-.2){fx.heroHit=.55;fx.monsterAttack=.65;enemyFx.push({t:1,type:(def.n.toLowerCase().includes('lobo')?'claw':def.n.toLowerCase().includes('golem')?'stone':'dark'),dmg:Math.max(1,Math.round(lastHp-c.hp))});if(enemyFx.length>5)enemyFx.shift();}if(lastMhp!==null&&c.mhp<lastMhp-1){fx.monHit=.35;fx.attack=.45;fx.monsterAttack=.45}if(c.kills>lastKills){fx.kill=.7;fx.monHit=.7}
  lastHp=c.hp;lastMhp=c.mhp;lastKills=c.kills;hero={cls:c.cls,name:c.name};mon={d:def,name:def.n};bossM={d:CFG.BOSS,name:CFG.BOSS.n};
  const want=new Map();S.online.filter(p=>p.n!==c.name).slice(0,8).forEach((p,i)=>want.set(p.n,{...p,i}));for(const k of others.keys())if(!want.has(k))others.delete(k);for(const[k,p]of want)others.set(k,p);
 }
@@ -190,6 +190,23 @@ function pixelLoop(){
  const c=S.c,def=CFG.MON[c.mon],attacking=!!c.auto&&fx.attack<=.05,mx=205+(fx.monsterAttack>0?Math.sin(tt*22)*8:Math.sin(tt*2)*2),foot=139,hx=112+(c.auto?Math.sin(tt*7)*2:0);
  for(let i=0;i<10;i++){const x=(i*37+Math.floor(tt*7))%PW,y=45+(i*29)%110;rect(x,y,1,1,i%2?'#9cae74':'#b7a76d')}
  drawMonster(mx,foot,def,def.n,1,fx.monsterAttack>0,fx.monHit>0,false);
+ if(enemyFx.length){
+  enemyFx=enemyFx.filter(a=>a.t>0);
+  for(const a of enemyFx){
+   const p=1-a.t, sx=mx-15, ex=hx+10, x=sx+(ex-sx)*Math.min(1,p*1.35), y=111-Math.sin(p*Math.PI)*16;
+   px.globalAlpha=Math.max(0,Math.min(1,a.t*2));
+   if(a.type==='claw'){
+    rect(x-4,y-3,8,3,'#c7d7ff');rect(x-2,y-5,3,2,'#f3f5ff');rect(x+1,y+1,4,2,'#7185a8');
+   }else if(a.type==='stone'){
+    rect(x-4,y-4,8,8,'#6e7183');rect(x-2,y-5,4,8,'#c4c9d6');rect(x-6,y-2,2,3,'#aaaec0');
+   }else{
+    rect(x-4,y-4,8,8,'#482d67');rect(x-2,y-5,4,9,'#c17cff');rect(x-1,y-2,2,4,'#f3d8ff');
+   }
+   if(p>.86){txt('-'+a.dmg,hx,foot-47,'#ff8c8c',7);rect(hx-7,foot-29,14,3,'#ff3f52');rect(hx-5,foot-30,10,2,'#ffc1a1')}
+   a.t-=.055;
+  }
+  px.globalAlpha=1;
+ }
  if(spellFx.length){
   spellFx=spellFx.filter(a=>a.t>0);
   for(const a of spellFx){
